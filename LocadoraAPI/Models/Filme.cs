@@ -22,12 +22,12 @@ namespace LocadoraAPI.Models
                 
         }
 
-        public Filme(string nome, string genero, string locador ,bool locado)
+        public Filme(string nome, string genero)
         {
             this.nomeFilme = nome;
             this.generoFilme = genero;
-            this.nomeLocador = locador;
-            this.locado = locado;
+            this.nomeLocador = null;
+            this.locado = false;
         }
 
     }

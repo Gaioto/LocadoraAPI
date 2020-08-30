@@ -29,7 +29,7 @@ namespace LocadoraAPI.Controllers
             {
                 bool existe = clientes.Exists(x => x.nomeCliente.Equals(nome));
 
-                if (existe == false)
+                if (!existe)
                 {
                     clientes.Add(new Cliente(nome, filmeAtual));
                     return Ok("Cliente cadastrado");
@@ -46,15 +46,15 @@ namespace LocadoraAPI.Controllers
         }
 
         [HttpPost]
-        public IHttpActionResult CadastrarFilme(string nomeFilme, string genero, string locador = null ,bool locado = false)
+        public IHttpActionResult CadastrarFilme(string nomeFilme, string genero)
         {
             if (!string.IsNullOrEmpty(nomeFilme))
             {
                 bool existe = filmes.Exists(x => x.nomeFilme.Equals(nomeFilme));
 
-                if (existe == false)
+                if (!existe)
                 {
-                    filmes.Add(new Filme(nomeFilme, genero, locador, locado));
+                    filmes.Add(new Filme(nomeFilme, genero));
                     return Ok("Filme cadastrado");
                 }
                 return Ok("Por favor digite as informações do filme");
@@ -73,59 +73,47 @@ namespace LocadoraAPI.Controllers
                     {
                         if (filmes[i].nomeFilme == filme)
                         {
-                            if (filmes[i].locado == true)
-                            {
-                                return Ok("Filme indisponivel");
-                            }
-                            else
+                            if (!filmes[i].locado)
                             {
                                 filmes[i].locado = true;
                                 filmes[i].nomeLocador = cliente;
                                 clientes[c].filmeLocado = filmes[i].nomeFilme;
                                 return Ok("Filme Locado, por favor devolva dentro do prazo de 5 dias");
+                                
                             }
-                        }
+                            return Ok("Filme indisponivel");
+                        } 
+                        return Ok("Filme não existe no sistema");  
                     }
-                }
+                } 
             }
-            
-            return NotFound();
+            return Ok("Cliente não existe no sistema");
         }
 
         [HttpPost]
-        public IHttpActionResult DevolverFilme(string filme, string cliente, int diasLocados)
+        public IHttpActionResult DevolverFilme(string filme, int diasLocados)
         {
-            for (var c = 0; c < clientes.Count; c++)
+
+            for (var i = 0; i < filmes.Count; i++)
             {
-                if (clientes[c].nomeCliente == cliente && clientes[c].filmeLocado == filme)
+                if (filmes[i].nomeFilme == filme)
                 {
-                    for (var i = 0; i < filmes.Count; i++)
-                    {
-                        if (filmes[i].nomeFilme == filme)
-                        {
-                            if(diasLocados > 5)
-                            {
-                                filmes[i].locado = false;
-                                filmes[i].nomeLocador = null;
-                                clientes[c].filmeLocado = null;
-                                return Ok("Filme devolvido, porém atrasado");
-                            } else
-                            {
-                                filmes[i].locado = false;
-                                filmes[i].nomeLocador = null;
-                                clientes[c].filmeLocado = null;
-                                return Ok("Filme devolvido");
-                            }
-                        }
+                    clientes.Where(x => x.nomeCliente == filmes[i].nomeLocador).ToList().ForEach(f => f.filmeLocado = null);
+                    filmes[i].locado = false;
+                    filmes[i].nomeLocador = null;
+
+                    if (diasLocados > 5)
+                    {                    
+                        return Ok("Filme devolvido, porém atrasado");
                     }
-                    
-                } else
-                {
-                    return NotFound();
+                    else
+                    {
+                        return Ok("Filme devolvido");
+                    }
                 }
             }
-            
-            return NotFound();
+
+            return Ok("Cliente não encontrado no sistema");
         }
 
     }
